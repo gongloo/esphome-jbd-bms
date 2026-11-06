@@ -218,6 +218,66 @@ TEST(JbdBmsBasicInfoTest, OperationStatusText) {
   EXPECT_NE(op_status.state.find("Discharging"), std::string::npos);
 }
 
+// ── Heating status ────────────────────────────────────────────────────────────
+
+TEST(JbdBmsBasicInfoTest, HeatingOffByDefault) {
+  TestableJbdBms bms;
+  binary_sensor::BinarySensor heating_bs;
+  bms.set_heating_binary_sensor(&heating_bs);
+
+  bms.on_jbd_bms_data(0x03, BASICINFO_FRAME);
+
+  EXPECT_FALSE(heating_bs.state);
+}
+
+TEST(JbdBmsBasicInfoTest, HeatingBit3) {
+  TestableJbdBms bms;
+  binary_sensor::BinarySensor heating_bs;
+  text_sensor::TextSensor op_status;
+  bms.set_heating_binary_sensor(&heating_bs);
+  bms.set_operation_status_text_sensor(&op_status);
+
+  auto frame = BASICINFO_FRAME;
+  frame[20] = 0x0B;  // Charging, Discharging, Heating (0x08)
+  bms.on_jbd_bms_data(0x03, frame);
+
+  EXPECT_TRUE(heating_bs.state);
+  EXPECT_NE(op_status.state.find("Heating (0x08)"), std::string::npos);
+  EXPECT_EQ(op_status.state.find("Unknown"), std::string::npos);
+}
+
+TEST(JbdBmsBasicInfoTest, HeatingBit4) {
+  TestableJbdBms bms;
+  binary_sensor::BinarySensor heating_bs, charging_bs, discharging_bs;
+  text_sensor::TextSensor op_status;
+  bms.set_heating_binary_sensor(&heating_bs);
+  bms.set_charging_binary_sensor(&charging_bs);
+  bms.set_discharging_binary_sensor(&discharging_bs);
+  bms.set_operation_status_text_sensor(&op_status);
+
+  auto frame = BASICINFO_FRAME;
+  frame[20] = 0x11;  // Charging, Heating (0x10)
+  bms.on_jbd_bms_data(0x03, frame);
+
+  EXPECT_TRUE(heating_bs.state);
+  EXPECT_TRUE(charging_bs.state);
+  EXPECT_FALSE(discharging_bs.state);
+  EXPECT_NE(op_status.state.find("Heating (0x10)"), std::string::npos);
+}
+
+TEST(JbdBmsBasicInfoTest, FactoryModeOperationStatusText) {
+  TestableJbdBms bms;
+  text_sensor::TextSensor op_status;
+  bms.set_operation_status_text_sensor(&op_status);
+
+  auto frame = BASICINFO_FRAME;
+  frame[20] = 0x43;  // Charging, Discharging, Factory mode
+  bms.on_jbd_bms_data(0x03, frame);
+
+  EXPECT_NE(op_status.state.find("Factory mode"), std::string::npos);
+  EXPECT_EQ(op_status.state.find("Unknown"), std::string::npos);
+}
+
 // ── Errors text (no errors) ───────────────────────────────────────────────────
 
 TEST(JbdBmsBasicInfoTest, ErrorsTextEmpty) {
@@ -289,6 +349,7 @@ TEST(JbdBmsHwVerTest, QueryDeviceModelWhenConfiguredAndEmpty) {
   bms.on_jbd_bms_data(0x04, CELLINFO_FRAME);
 
   EXPECT_EQ(bms.last_command_address, 0x05);
+  EXPECT_EQ(bms.last_command_type, 0xA5);
 }
 
 TEST(JbdBmsHwVerTest, SkipQueryDeviceModelWhenAutoRetrieveDisabled) {
@@ -334,6 +395,7 @@ TEST(JbdBmsHwVerTest, MaxQueryDeviceModelAttempts) {
     bms.last_command_address = 0;
     bms.on_jbd_bms_data(0x04, CELLINFO_FRAME);
     EXPECT_EQ(bms.last_command_address, 0x05);
+    EXPECT_EQ(bms.last_command_type, 0xA5);
   }
 
   bms.last_command_address = 0;
@@ -592,12 +654,13 @@ TEST(JbdBmsTest, NullSensorsDoNotCrash) {
 
 TEST(JbdBmsTest, PublishDeviceUnavailableInvalidatesBinarySensors) {
   TestableJbdBms bms;
-  binary_sensor::BinarySensor online, balancing, charging, discharging;
+  binary_sensor::BinarySensor online, balancing, charging, discharging, heating;
   binary_sensor::BinarySensor cov, cuv, pov, puv, cot, cut, dot, dut, co, doc, sc, ic, swl;
   bms.set_online_status_binary_sensor(&online);
   bms.set_balancing_binary_sensor(&balancing);
   bms.set_charging_binary_sensor(&charging);
   bms.set_discharging_binary_sensor(&discharging);
+  bms.set_heating_binary_sensor(&heating);
   bms.set_cell_overvoltage_protection_binary_sensor(&cov);
   bms.set_cell_undervoltage_protection_binary_sensor(&cuv);
   bms.set_pack_overvoltage_protection_binary_sensor(&pov);
@@ -618,6 +681,7 @@ TEST(JbdBmsTest, PublishDeviceUnavailableInvalidatesBinarySensors) {
   EXPECT_TRUE(balancing.has_state());
   EXPECT_TRUE(charging.has_state());
   EXPECT_TRUE(discharging.has_state());
+  EXPECT_TRUE(heating.has_state());
   EXPECT_TRUE(cov.has_state());
   EXPECT_TRUE(swl.has_state());
 
@@ -627,6 +691,7 @@ TEST(JbdBmsTest, PublishDeviceUnavailableInvalidatesBinarySensors) {
   EXPECT_FALSE(balancing.has_state());
   EXPECT_FALSE(charging.has_state());
   EXPECT_FALSE(discharging.has_state());
+  EXPECT_FALSE(heating.has_state());
   EXPECT_FALSE(cov.has_state());
   EXPECT_FALSE(cuv.has_state());
   EXPECT_FALSE(pov.has_state());

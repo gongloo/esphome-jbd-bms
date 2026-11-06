@@ -73,6 +73,7 @@ uart:
 jbd_bms:
   - id: bms0
     update_interval: 2s
+    auto_retrieve_hardware_version: false
     rx_timeout: ${rx_timeout}
     # flow_control_pin: GPIO12
 
@@ -99,6 +100,8 @@ binary_sensor:
       name: "charging"
     discharging:
       name: "discharging"
+    heating:
+      name: "heating"
     online_status:
       name: "online status"
     cell_overvoltage_protection:

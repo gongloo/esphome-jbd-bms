@@ -9,14 +9,17 @@ esphome:
   name: ${name}
   friendly_name: ${name}
   comment: ${device_description}
+  min_version: "2026.11.0"
   project:
     name: "syssi.esphome-jbd-bms"
     version: 2.5.0
   devices:
     - id: device0
       name: "${bms0}"
+      relation: via
     - id: device1
       name: "${bms1}"
+      relation: via
 
 esp32:
   board: wemos_d1_mini32
@@ -67,9 +70,11 @@ jbd_bms_ble:
   - id: bms0
     ble_client_id: client0
     update_interval: 5s
+    auto_retrieve_hardware_version: false
   - id: bms1
     ble_client_id: client1
     update_interval: 5s
+    auto_retrieve_hardware_version: false
 
 button:
   - platform: jbd_bms_ble
@@ -119,6 +124,9 @@ binary_sensor:
       device_id: device0
     discharging:
       name: "discharging"
+      device_id: device0
+    heating:
+      name: "heating"
       device_id: device0
     online_status:
       name: "online status"
@@ -173,6 +181,9 @@ binary_sensor:
       device_id: device1
     discharging:
       name: "discharging"
+      device_id: device1
+    heating:
+      name: "heating"
       device_id: device1
     online_status:
       name: "online status"
