@@ -592,13 +592,12 @@ TEST(JbdBmsTest, NullSensorsDoNotCrash) {
 
 TEST(JbdBmsTest, PublishDeviceUnavailableInvalidatesBinarySensors) {
   TestableJbdBms bms;
-  binary_sensor::BinarySensor online, balancing, charging, discharging, heating;
+  binary_sensor::BinarySensor online, balancing, charging, discharging;
   binary_sensor::BinarySensor cov, cuv, pov, puv, cot, cut, dot, dut, co, doc, sc, ic, swl;
   bms.set_online_status_binary_sensor(&online);
   bms.set_balancing_binary_sensor(&balancing);
   bms.set_charging_binary_sensor(&charging);
   bms.set_discharging_binary_sensor(&discharging);
-  bms.set_heating_binary_sensor(&heating);
   bms.set_cell_overvoltage_protection_binary_sensor(&cov);
   bms.set_cell_undervoltage_protection_binary_sensor(&cuv);
   bms.set_pack_overvoltage_protection_binary_sensor(&pov);
@@ -619,7 +618,6 @@ TEST(JbdBmsTest, PublishDeviceUnavailableInvalidatesBinarySensors) {
   EXPECT_TRUE(balancing.has_state());
   EXPECT_TRUE(charging.has_state());
   EXPECT_TRUE(discharging.has_state());
-  EXPECT_TRUE(heating.has_state());
   EXPECT_TRUE(cov.has_state());
   EXPECT_TRUE(swl.has_state());
 
@@ -629,7 +627,6 @@ TEST(JbdBmsTest, PublishDeviceUnavailableInvalidatesBinarySensors) {
   EXPECT_FALSE(balancing.has_state());
   EXPECT_FALSE(charging.has_state());
   EXPECT_FALSE(discharging.has_state());
-  EXPECT_FALSE(heating.has_state());
   EXPECT_FALSE(cov.has_state());
   EXPECT_FALSE(cuv.has_state());
   EXPECT_FALSE(pov.has_state());

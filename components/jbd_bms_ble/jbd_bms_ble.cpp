@@ -712,7 +712,6 @@ void JbdBmsBle::publish_device_unavailable_() {
   invalidate_binary_sensor(this->balancing_binary_sensor_);
   invalidate_binary_sensor(this->charging_binary_sensor_);
   invalidate_binary_sensor(this->discharging_binary_sensor_);
-  invalidate_binary_sensor(this->heating_binary_sensor_);
   invalidate_binary_sensor(this->cell_overvoltage_protection_binary_sensor_);
   invalidate_binary_sensor(this->cell_undervoltage_protection_binary_sensor_);
   invalidate_binary_sensor(this->pack_overvoltage_protection_binary_sensor_);
